@@ -1561,7 +1561,7 @@ function populateAboutVersionInformation(){
  */
 function populateReleaseNotes(){
     $.ajax({
-        url: 'https://github.com/dscalzi/HeliosLauncher/releases.atom',
+        url: 'https://github.com/ogidevs/HeliosLauncher/releases.atom',
         success: (data) => {
             const version = 'v' + remote.app.getVersion()
             const entries = $(data).find('entry')
@@ -1591,7 +1591,7 @@ function populateReleaseNotes(){
 function prepareAboutTab(){
     populateAboutVersionInformation()
     // AUTO UPDATE ISKLJUČEN ZA SADA / OVO JE ZA CHANGELOGS (RLEASE NOTES), ne treba nam
-    // populateReleaseNotes()
+    populateReleaseNotes()
 }
 
 /**
