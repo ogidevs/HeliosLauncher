@@ -55,7 +55,7 @@
   "build": {
     "publish": [{
         "provider": "github",
-        "owner": "ogidev",
+        "owner": "ogidevs",
         "repo": "HeliosLauncher"
     }]
   }
