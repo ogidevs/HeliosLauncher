@@ -1,6 +1,6 @@
 {
   "name": "woglauncher",
-  "version": "0.2.7",
+  "version": "1.0.0",
   "productName": "World Of Glory Launcher",
   "description": "Modded Minecraft Launcher Forked",
   "author": "Daniel Scalzi (https://github.com/dscalzi/) | Forked by ogidevs",
@@ -51,12 +51,5 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ogidevs/HeliosLauncher.git"
-  },
-  "build": {
-    "publish": [{
-        "provider": "github",
-        "owner": "ogidevs",
-        "repo": "HeliosLauncher"
-    }]
   }
 }
