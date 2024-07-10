@@ -25,6 +25,7 @@
   "dependencies": {
     "@electron/remote": "^2.1.2",
     "adm-zip": "^0.5.16",
+    "bootstrap-icons": "^1.11.2",
     "discord-rpc-patch": "^4.0.1",
     "bootstrap-icons": "^1.11.2",
     "ejs": "^3.1.10",
