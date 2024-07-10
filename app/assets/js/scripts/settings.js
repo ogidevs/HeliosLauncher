@@ -1,10 +1,9 @@
 // Requirements
 const os     = require('os')
 const semver = require('semver')
-
 const DropinModUtil  = require('./assets/js/dropinmodutil')
 const { MSFT_OPCODE, MSFT_REPLY_TYPE, MSFT_ERROR } = require('./assets/js/ipcconstants')
-
+const { data } = require('jquery')
 const settingsState = {
     invalid: new Set()
 }
@@ -351,6 +350,12 @@ document.getElementById('settingsAddMojangAccount').onclick = (e) => {
     })
 }
 
+// Bind the add mojang account button.
+document.getElementById('settingsAddCrackedAccount').onclick = (e) => {
+    switchView(getCurrentView(), VIEWS.loginOptions, 500, 500, () => {
+    })
+}
+
 // Bind the add microsoft account button.
 document.getElementById('settingsAddMicrosoftAccount').onclick = (e) => {
     switchView(getCurrentView(), VIEWS.waiting, 500, 500, () => {
@@ -464,6 +469,30 @@ function bindAuthAccountSelect(){
             val.setAttribute('selected', '')
             val.innerHTML = Lang.queryJS('settings.authAccountSelect.selectedButton')
             setSelectedAccount(val.closest('.settingsAuthAccount').getAttribute('uuid'))
+            
+            // OZVEZI IKONICU NA POCETNOJ STRANI KAD SE PROMENI ACCOUNT
+            const avatarContainer = document.getElementById('avatarContainer');
+            var skin1 = 'https://mc-heads.com/images/skeleton_skull.png';
+            fetch(`${ConfigManager.getBackendURL()}/get_character_skin/${ConfigManager.getSelectedAccount().username}`)
+            .then(response => {
+                if (response.status === 404) {
+                    avatarContainer.style.backgroundImage = `url('${skin1}')`;
+                    throw new Error('Image not found (404)');
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                });
+            })
+            .then(dataUrl => {
+                avatarContainer.style.backgroundImage = `url('${dataUrl}')`;
+            })
+            .catch(error => console.error('Error fetching the image:', error));
         }
     })
 }
@@ -517,6 +546,21 @@ function processLogOut(val, isLastAccount){
         msAccDomElementCache = parent
         switchView(getCurrentView(), VIEWS.waiting, 500, 500, () => {
             ipcRenderer.send(MSFT_OPCODE.OPEN_LOGOUT, uuid, isLastAccount)
+        })
+    }else if (targetAcc.type === 'cracked') {
+        AuthManager.removeCrackedAccount(uuid).then(() => {
+            if(!isLastAccount && uuid === prevSelAcc.uuid){
+                const selAcc = ConfigManager.getSelectedAccount()
+                refreshAuthAccountSelected(selAcc.uuid)
+                updateSelectedAccount(selAcc)
+                validateSelectedAccount()
+            }
+            if(isLastAccount) {
+                switchView(getCurrentView(), VIEWS.loginOptions)
+            }
+        })
+        $(parent).fadeOut(250, () => {
+            parent.remove()
         })
     } else {
         AuthManager.removeMojangAccount(uuid).then(() => {
@@ -620,6 +664,7 @@ function refreshAuthAccountSelected(uuid){
 
 const settingsCurrentMicrosoftAccounts = document.getElementById('settingsCurrentMicrosoftAccounts')
 const settingsCurrentMojangAccounts = document.getElementById('settingsCurrentMojangAccounts')
+const settingsCurrentCrackedAccounts = document.getElementById('settingsCurrentCrackedAccounts')
 
 /**
  * Add auth account elements for each one stored in the authentication database.
@@ -632,16 +677,68 @@ function populateAuthAccounts(){
     }
     const selectedUUID = ConfigManager.getSelectedAccount().uuid
 
+    // SKIN NA POCETNOJ STRANI
+    const avatarContainer = document.getElementById('avatarContainer');
+    var skin1 = 'https://mc-heads.com/images/skeleton_skull.png';
+    fetch(`${ConfigManager.getBackendURL()}/get_character_skin/${ConfigManager.getSelectedAccount().username}`)
+    .then(response => {
+        if (response.status === 404) {
+            avatarContainer.style.backgroundImage = `url('${skin1}')`;
+            throw new Error('Image not found (404)');
+        }
+        return response.blob();
+    })
+    .then(blob => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
+    })
+    .then(dataUrl => {
+        avatarContainer.style.backgroundImage = `url('${dataUrl}')`;
+    })
+    .catch(error => console.error('Error fetching the image:', error));
+
+
     let microsoftAuthAccountStr = ''
     let mojangAuthAccountStr = ''
+    let crackedAuthAccountStr = ''
 
     authKeys.forEach((val) => {
         const acc = authAccounts[val]
 
-        const accHtml = `<div class="settingsAuthAccount" uuid="${acc.uuid}">
+        // SKINOVI U SETTINGSU
+        var skin1 = 'https://mc-heads.com/images/skeleton_skull.png';
+        fetch(`${ConfigManager.getBackendURL()}/get_character_skin/${acc.username}`)
+            .then(response => {
+                if (response.status === 404) {
+                    const imgElementInHtml = document.querySelector(`[uuid="${acc.uuid}"] .settingsAuthAccountImage`);
+                    if (imgElementInHtml) {
+                        imgElementInHtml.src = skin1;
+                    }
+                    throw new Error('Image not found (404)');
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    const imgElementInHtml = document.querySelector(`[uuid="${acc.uuid}"] .settingsAuthAccountImage`);
+                    if (imgElementInHtml) {
+                        imgElementInHtml.src = reader.result;
+                    }
+                };
+                reader.readAsDataURL(blob);
+            })
+            .catch(error => {
+                console.log("cannot fetch skin, using default");
+            });
+        
+        var accHtml = `<div class="settingsAuthAccount" uuid="${acc.uuid}">
             <div class="settingsAuthAccountLeft">
-                <img class="settingsAuthAccountImage" alt="${acc.displayName}" src="https://mc-heads.net/body/${acc.uuid}/60">
-            </div>
+            <img class="settingsAuthAccountImage" alt="${acc.displayName}" src=""></div>
             <div class="settingsAuthAccountRight">
                 <div class="settingsAuthAccountDetails">
                     <div class="settingsAuthAccountDetailPane">
@@ -662,8 +759,11 @@ function populateAuthAccounts(){
             </div>
         </div>`
 
+
         if(acc.type === 'microsoft') {
             microsoftAuthAccountStr += accHtml
+        } else if(acc.type === 'cracked') {
+            crackedAuthAccountStr += accHtml
         } else {
             mojangAuthAccountStr += accHtml
         }
@@ -672,6 +772,7 @@ function populateAuthAccounts(){
 
     settingsCurrentMicrosoftAccounts.innerHTML = microsoftAuthAccountStr
     settingsCurrentMojangAccounts.innerHTML = mojangAuthAccountStr
+    settingsCurrentCrackedAccounts.innerHTML = crackedAuthAccountStr
 }
 
 /**
@@ -1074,8 +1175,14 @@ async function loadSelectedServerOnModsTab(){
     const serv = (await DistroAPI.getDistribution()).getServerById(ConfigManager.getSelectedServer())
 
     for(const el of document.getElementsByClassName('settingsSelServContent')) {
+        var icon = null
+        if (serv.rawServer.icon == null) {
+            icon = ""
+        }else{
+            icon = serv.rawServer.icon
+        }
         el.innerHTML = `
-            <img class="serverListingImg" src="${serv.rawServer.icon}"/>
+            <img class="serverListingImg" src="${icon}"/>
             <div class="serverListingDetails">
                 <span class="serverListingName">${serv.rawServer.name}</span>
                 <span class="serverListingDescription">${serv.rawServer.description}</span>
@@ -1401,11 +1508,12 @@ const settingsAboutChangelogTitle  = settingsTabAbout.getElementsByClassName('se
 const settingsAboutChangelogText   = settingsTabAbout.getElementsByClassName('settingsChangelogText')[0]
 const settingsAboutChangelogButton = settingsTabAbout.getElementsByClassName('settingsChangelogButton')[0]
 
+// NOTE: AUTO UPDATE ISKLJUČEN ZA SADA
 // Bind the devtools toggle button.
-document.getElementById('settingsAboutDevToolsButton').onclick = (e) => {
-    let window = remote.getCurrentWindow()
-    window.toggleDevTools()
-}
+// document.getElementById('settingsAboutDevToolsButton').onclick = (e) => {
+//     let window = remote.getCurrentWindow()
+//     window.toggleDevTools()
+// }
 
 /**
  * Return whether or not the provided version is a prerelease.
@@ -1482,7 +1590,8 @@ function populateReleaseNotes(){
  */
 function prepareAboutTab(){
     populateAboutVersionInformation()
-    populateReleaseNotes()
+    // AUTO UPDATE ISKLJUČEN ZA SADA
+    // populateReleaseNotes()
 }
 
 /**
@@ -1538,12 +1647,14 @@ function populateSettingsUpdateInformation(data){
         settingsUpdateTitle.innerHTML = Lang.queryJS('settings.updates.latestVersionTitle')
         settingsUpdateChangelogCont.style.display = 'none'
         populateVersionInformation(remote.app.getVersion(), settingsUpdateVersionValue, settingsUpdateVersionTitle, settingsUpdateVersionCheck)
-        settingsUpdateButtonStatus(Lang.queryJS('settings.updates.checkForUpdatesButton'), false, () => {
-            if(!isDev){
-                ipcRenderer.send('autoUpdateAction', 'checkForUpdate')
-                settingsUpdateButtonStatus(Lang.queryJS('settings.updates.checkingForUpdatesButton'), true)
-            }
-        })
+        
+        // NOTE: AUTO UPDATE ISKLJUČEN ZA SADA
+        // settingsUpdateButtonStatus(Lang.queryJS('settings.updates.checkForUpdatesButton'), false, () => {
+        //     if(!isDev){
+        //         ipcRenderer.send('autoUpdateAction', 'checkForUpdate')
+        //         settingsUpdateButtonStatus(Lang.queryJS('settings.updates.checkingForUpdatesButton'), true)
+        //     }
+        // })
     }
 }
 

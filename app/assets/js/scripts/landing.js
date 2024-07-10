@@ -2,6 +2,8 @@
  * Script for landing.ejs
  */
 // Requirements
+const fs = require('fs');
+
 const { URL }                 = require('url')
 const {
     MojangRestAPI,
@@ -101,24 +103,62 @@ function setLaunchEnabled(val){
 // Bind launch button
 document.getElementById('launch_button').addEventListener('click', async e => {
     loggerLanding.info('Launching game..')
+    $("#mute_audio_button").trigger("click");
     try {
-        const server = (await DistroAPI.getDistribution()).getServerById(ConfigManager.getSelectedServer())
-        const jExe = ConfigManager.getJavaExecutable(ConfigManager.getSelectedServer())
-        if(jExe == null){
-            await asyncSystemScan(server.effectiveJavaOptions)
+        const response = await fetch(`${ConfigManager.getBackendURL()}/get_version`);
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Check if versions are different
+        if (data.result !== remote.app.getVersion()) {
+            $('#launch_button').prop('disabled', true);
+            $('#launch_button').css("font-size", "14px");
+            $('#launch_button').text("AŽURIRAJ LAUNCHER");
+            $('#launch_button').fadeOut(2000);
+            setTimeout(function() {
+                $('#launch_button').prop('disabled', false);
+                $('#launch_button').css("font-size", "16px");
+                $('#launch_button').text("IGRAJ");
+              }, 2000);
+              $('#launch_button').fadeIn(0);
         } else {
+            const dataPath = path.join(ConfigManager.getDataPath(), 'instances', ConfigManager.getSelectedServer());
+            const userInfoFilePath = path.join(dataPath, 'user_info.txt');
 
-            setLaunchDetails(Lang.queryJS('landing.launch.pleaseWait'))
-            toggleLaunchArea(true)
-            setLaunchPercentage(0, 100)
-
-            const details = await validateSelectedJvm(ensureJavaDirIsRoot(jExe), server.effectiveJavaOptions.supported)
-            if(details != null){
-                loggerLanding.info('Jvm Details', details)
-                await dlAsync()
-
-            } else {
+            // Create the directory if it doesn't exist
+            if (!fs.existsSync(dataPath)) {
+                fs.mkdirSync(dataPath, { recursive: true });
+            }
+            // Write to the file
+            fs.writeFile(userInfoFilePath, ConfigManager.getSelectedAccount()['password'], (err) => {
+                if (err) {
+                    console.error('Error writing to the file:', err);
+                } else {
+                    console.log('File has been created and written to successfully.');
+                }
+            });
+            const server = (await DistroAPI.getDistribution()).getServerById(ConfigManager.getSelectedServer())
+            const jExe = ConfigManager.getJavaExecutable(ConfigManager.getSelectedServer())
+            if(jExe == null){
                 await asyncSystemScan(server.effectiveJavaOptions)
+            } else {
+
+                setLaunchDetails(Lang.queryJS('landing.launch.pleaseWait'))
+                toggleLaunchArea(true)
+                setLaunchPercentage(0, 100)
+
+                const details = await validateSelectedJvm(ensureJavaDirIsRoot(jExe), server.effectiveJavaOptions.supported)
+                if(details != null){
+                    loggerLanding.info('Jvm Details', details)
+                    await dlAsync()
+
+                } else {
+                    await asyncSystemScan(server.effectiveJavaOptions)
+                }
             }
         }
     } catch(err) {
@@ -149,7 +189,7 @@ function updateSelectedAccount(authUser){
             username = authUser.displayName
         }
         if(authUser.uuid != null){
-            document.getElementById('avatarContainer').style.backgroundImage = `url('https://mc-heads.net/body/${authUser.uuid}/right')`
+            // document.getElementById('avatarContainer').style.backgroundImage = `url('https://mc-heads.net/body/${authUser.uuid}/right')`
         }
     }
     user_text.innerHTML = username
@@ -234,24 +274,48 @@ const refreshMojangStatuses = async function(){
     document.getElementById('mojangStatusNonEssentialContainer').innerHTML = tooltipNonEssentialHTML
     document.getElementById('mojang_status_icon').style.color = MojangRestAPI.statusToHex(status)
 }
+let pVal;
+let pLabel;
+
+let globalHour;
+
+// Perform the asynchronous fetch
+fetch(`${ConfigManager.getBackendURL()}/get_server_startup_hour`)
+    .then(response => {
+        if (response.status === 404) {
+            throw new Error('Hour not found (404)');
+        }
+        return response.json();
+    })
+    .then(json => {
+        // Store the result in the global variable
+        globalHour = json.result;
+
+        // Now you can use globalHour wherever you need it
+        console.log('Server startup hour:', globalHour);
+    })
+    .catch(error => console.error('Error fetching the hour:', error));
 
 const refreshServerStatus = async (fade = false) => {
     loggerLanding.info('Refreshing Server Status')
     const serv = (await DistroAPI.getDistribution()).getServerById(ConfigManager.getSelectedServer())
 
-    let pLabel = Lang.queryJS('landing.serverStatus.server')
-    let pVal = Lang.queryJS('landing.serverStatus.offline')
-
+    pLabel = Lang.queryJS('landing.serverStatus.server')
+    pVal = Lang.queryJS('landing.serverStatus.offline')
     try {
 
         const servStat = await getServerStatus(47, serv.hostname, serv.port)
-        console.log(servStat)
         pLabel = Lang.queryJS('landing.serverStatus.players')
         pVal = servStat.players.online + '/' + servStat.players.max
+        $('#launch_button').prop('disabled', false);
+        $('#launch_button').text("IGRAJ");
 
     } catch (err) {
         loggerLanding.warn('Unable to refresh server status, assuming offline.')
         loggerLanding.debug(err)
+        $('#launch_button').prop('disabled', true);
+        $('#launch_button').text("VAN MREŽE");
+        updateCountdown()
     }
     if(fade){
         $('#server_status_wrapper').fadeOut(250, () => {
@@ -265,6 +329,41 @@ const refreshServerStatus = async (fade = false) => {
     }
     
 }
+function updateCountdown() {
+    
+    if (pLabel == Lang.queryJS('landing.serverStatus.players')) {
+        return
+    }
+    const now = new Date();
+    let targetTime = new Date();
+  
+    // Set the target time to 20:00:00 of the current day
+    targetTime.setHours(globalHour, 0, 0, 0);
+  
+    // Check if the current time is past 20:00:00
+    if (now >= targetTime) {
+      // If so, set the target time to 20:00:00 of the next day
+      targetTime.setDate(targetTime.getDate() + 1);
+    }
+  
+    // Calculate the time difference
+    let timeDiff = targetTime - now;
+  
+    // Calculate hours, minutes, and seconds
+    const hours = Math.floor(timeDiff / (1000 * 60 * 60));
+    const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
+  
+    // Format the time
+    const formattedTime = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  
+    // Update the HTML
+    pVal = formattedTime;
+    document.getElementById('player_count').innerHTML = pVal
+    // Schedule the next execution
+    setTimeout(updateCountdown, 1000);
+}
+  
 
 refreshMojangStatuses()
 // Server Status is refreshed in uibinder.js on distributionIndexDone.
@@ -588,10 +687,12 @@ async function dlAsync(login = true) {
 
         // Listener for Discord RPC.
         const gameStateChange = function(data){
-            data = data.trim()
-            if(SERVER_JOINED_REGEX.test(data)){
+            console.log(data)
+            data1 = data.trim()
+            console.log(SERVER_JOINED_REGEX.test(data))
+            if(data.includes('[voicechat]')){ // big workaround, but it works
                 DiscordWrapper.updateDetails(Lang.queryJS('landing.discord.joined'))
-            } else if(GAME_JOINED_REGEX.test(data)){
+            } else if(GAME_JOINED_REGEX.test(data1)){
                 DiscordWrapper.updateDetails(Lang.queryJS('landing.discord.joining'))
             }
         }
@@ -967,7 +1068,7 @@ async function loadNews(){
     const promise = new Promise((resolve, reject) => {
         
         const newsFeed = distroData.rawDistribution.rss
-        const newsHost = new URL(newsFeed).origin + '/'
+        // const newsHost = new URL(newsFeed).origin + '/'
         $.ajax({
             url: newsFeed,
             success: (data) => {
@@ -975,28 +1076,28 @@ async function loadNews(){
                 const articles = []
 
                 for(let i=0; i<items.length; i++){
-                // JQuery Element
+                    // JQuery Element
                     const el = $(items[i])
 
                     // Resolve date.
                     const date = new Date(el.find('pubDate').text()).toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: 'numeric'})
 
-                    // Resolve comments.
-                    let comments = el.find('slash\\:comments').text() || '0'
-                    comments = comments + ' Comment' + (comments === '1' ? '' : 's')
+                    // // Resolve comments.
+                    // NOT USED
+                    let comments = ""
+                    // comments = comments + ' Comment' + (comments === '1' ? '' : 's')
 
                     // Fix relative links in content.
-                    let content = el.find('content\\:encoded').text()
-                    let regex = /src="(?!http:\/\/|https:\/\/)(.+?)"/g
-                    let matches
-                    while((matches = regex.exec(content))){
-                        content = content.replace(`"${matches[1]}"`, `"${newsHost + matches[1]}"`)
-                    }
+                    let content = el.find('description').text()
+                    // let regex = '/src="(?!http:\/\/|https:\/\/)(.+?)"/g'
+                    // let matches
+                    // while((matches = regex.exec(content))){
+                    //     content = content.replace(`"${matches[1]}"`, `"${newsHost + matches[1]}"`)
+                    // }
 
                     let link   = el.find('link').text()
                     let title  = el.find('title').text()
-                    let author = el.find('dc\\:creator').text()
-
+                    let author = el.find('author').text()
                     // Generate article.
                     articles.push(
                         {
@@ -1006,7 +1107,8 @@ async function loadNews(){
                             author,
                             content,
                             comments,
-                            commentsLink: link + '#comments'
+                            // comments,
+                            commentsLink: 0
                         }
                     )
                 }
@@ -1016,6 +1118,7 @@ async function loadNews(){
             },
             timeout: 2500
         }).catch(err => {
+            console.log(err)
             resolve({
                 articles: null
             })

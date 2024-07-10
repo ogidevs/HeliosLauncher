@@ -12,8 +12,10 @@
 const ConfigManager          = require('./configmanager')
 const { LoggerUtil }         = require('helios-core')
 const { RestResponseStatus } = require('helios-core/common')
-const { MojangRestAPI, MojangErrorCode } = require('helios-core/mojang')
-const { MicrosoftAuth, MicrosoftErrorCode } = require('helios-core/microsoft')
+const { MojangRestAPI, mojangErrorDisplayable, MojangErrorCode } = require('helios-core/mojang')
+const { MicrosoftAuth, microsoftErrorDisplayable, MicrosoftErrorCode } = require('helios-core/microsoft')
+
+
 const { AZURE_CLIENT_ID }    = require('./ipcconstants')
 const Lang = require('./langloader')
 
@@ -138,7 +140,27 @@ function mojangErrorDisplayable(errorCode) {
  * @param {string} username The account username (email if migrated).
  * @param {string} password The account password.
  * @returns {Promise.<Object>} Promise which resolves the resolved authenticated account object.
+ * 
  */
+const minecraftAuth = require("../../../node_modules/minecraft-auth/dist/index");
+
+exports.addCrackedAccount = async function(username, password) {
+    try {
+        const session = new minecraftAuth.CrackedAccount(username);
+        const ret = ConfigManager.addCrackedAuthAccount(session.uuid, username, session.username, password)
+        if(ConfigManager.getClientToken() == null){
+            ConfigManager.setClientToken(session.clientToken)
+        }
+        ConfigManager.save()
+        return ret
+        
+    } catch (err){
+        log.error(err)
+        return Promise.reject(mojangErrorDisplayable(MojangErrorCode.UNKNOWN))
+    }
+}
+
+
 exports.addMojangAccount = async function(username, password) {
     try {
         const response = await MojangRestAPI.authenticate(username, password, ConfigManager.getClientToken())
@@ -291,6 +313,17 @@ exports.removeMojangAccount = async function(uuid){
     }
 }
 
+exports.removeCrackedAccount = async function(uuid){
+    try {
+        ConfigManager.removeAuthAccount(uuid)
+        ConfigManager.save()
+        return Promise.resolve()
+    } catch (err){
+        log.error('Error while removing account', err)
+        return Promise.reject(err)
+    }
+}
+
 /**
  * Remove a Microsoft account. It is expected that the caller will invoke the OAuth logout
  * through the ipc renderer.
@@ -343,6 +376,39 @@ async function validateSelectedMojangAccount(){
     }
     
 }
+/**
+ * Validate the selected account with Mojang's authserver. If the account is not valid,
+ * we will attempt to refresh the access token and update that value. If that fails, a
+ * new login will be required.
+ * 
+ * @returns {Promise.<boolean>} Promise which resolves to true if the access token is valid,
+ * otherwise false.
+ */
+async function validateSelectedCrackedAccount(){
+    try { 
+        const current = ConfigManager.getSelectedAccount()
+        const url = `${ConfigManager.getBackendURL()}/get_character/${current.username}?char_password=${current.password}`;
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.result) {
+            ConfigManager.updateCrackedAuthAccount(current.uuid);
+            ConfigManager.save();
+            return true;
+        } else {
+            return false;
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        return false;
+    }
+}
+
 
 /**
  * Validate the selected account with Microsoft's authserver. If the account is not valid,
@@ -415,9 +481,10 @@ async function validateSelectedMicrosoftAccount(){
  */
 exports.validateSelected = async function(){
     const current = ConfigManager.getSelectedAccount()
-
     if(current.type === 'microsoft') {
         return await validateSelectedMicrosoftAccount()
+    }else if(current.type === 'cracked') {
+        return await validateSelectedCrackedAccount()
     } else {
         return await validateSelectedMojangAccount()
     }

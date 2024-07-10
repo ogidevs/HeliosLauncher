@@ -28,7 +28,7 @@
                 <span class="settingsTabHeaderText"><%- lang('settings.tabAccountHeaderText') %></span>
                 <span class="settingsTabHeaderDesc"><%- lang('settings.tabAccountHeaderDesc') %></span>
             </div>
-            <div class="settingsAuthAccountTypeContainer">
+            <div class="settingsAuthAccountTypeContainer" style="display: none;">
                 <div class="settingsAuthAccountTypeHeader">
                     <div class="settingsAuthAccountTypeHeaderLeft">
                         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 23 23">
@@ -49,7 +49,7 @@
                 </div>
             </div>
 
-            <div class="settingsAuthAccountTypeContainer">
+            <div class="settingsAuthAccountTypeContainer" style="display: none;">
                 <div class="settingsAuthAccountTypeHeader">
                     <div class="settingsAuthAccountTypeHeaderLeft">
                         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 9.677 9.667">
@@ -65,6 +65,20 @@
                 </div>
                 
                 <div class="settingsCurrentAccounts" id="settingsCurrentMojangAccounts">
+                    <!-- Mojang auth accounts populated here. -->
+                </div>
+            </div>
+            <div class="settingsAuthAccountTypeContainer">
+                <div class="settingsAuthAccountTypeHeader">
+                    <div class="settingsAuthAccountTypeHeaderLeft">
+                        <span><%- lang('settings.crackedAccount') %></span>
+                    </div>
+                    <div class="settingsAuthAccountTypeHeaderRight">
+                        <button class="settingsAddAuthAccount" id="settingsAddCrackedAccount"><%- lang('settings.addCrackedAccount') %></button>
+                    </div>
+                </div>
+                
+                <div class="settingsCurrentAccounts" id="settingsCurrentCrackedAccounts">
                     <!-- Mojang auth accounts populated here. -->
                 </div>
             </div>
@@ -93,7 +107,7 @@
                     </label>
                 </div>
             </div>
-            <div class="settingsFieldContainer">
+            <div class="settingsFieldContainer" style="display: none;">
                 <div class="settingsFieldLeft">
                     <span class="settingsFieldTitle"><%- lang('settings.autoConnectTitle') %></span>
                 </div>
@@ -274,18 +288,18 @@
                 <span class="settingsTabHeaderText"><%- lang('settings.launcherTabHeaderText') %></span>
                 <span class="settingsTabHeaderDesc"><%- lang('settings.launcherTabHeaderDesc') %></span>
             </div>
-            <div class="settingsFieldContainer">
-                <div class="settingsFieldLeft">
+            <!-- <div class="settingsFieldContainer"> -->
+                <!-- <div class="settingsFieldLeft">
                     <span class="settingsFieldTitle"><%- lang('settings.allowPrereleaseTitle') %></span>
                     <span class="settingsFieldDesc"><%- lang('settings.allowPrereleaseDesc') %></span>
-                </div>
-                <div class="settingsFieldRight">
+                </div> -->
+                <!-- <div class="settingsFieldRight">
                     <label class="toggleSwitch">
                         <input type="checkbox" cValue="AllowPrerelease">
                         <span class="toggleSwitchSlider"></span>
                     </label>
-                </div>
-            </div>
+                </div> -->
+            <!-- </div> -->
             <div class="settingsFileSelContainer">
                 <div class="settingsFileSelContent">
                     <div class="settingsFieldTitle" id="settingsDataDirTitle"><%- lang('settings.dataDirectoryTitle') %></div>
@@ -333,10 +347,13 @@
                     <!-- The following must be included in third-party usage. -->
                     <!-- <a href="https://github.com/dscalzi/HeliosLauncher" id="settingsAboutSourceButton" class="settingsAboutButton">Original Source</a> -->
                     <a href="<%- lang('settings.supportLink') %>" id="settingsAboutSupportButton" class="settingsAboutButton"><%- lang('settings.support') %></a>
-                    <a href="#" id="settingsAboutDevToolsButton" class="settingsAboutButton"><%- lang('settings.devToolsConsole') %></a>
+                    <!-- <a href="#" id="settingsAboutDevToolsButton" class="settingsAboutButton"><%- lang('settings.devToolsConsole') %></a> -->
                 </div>
             </div>
-            <div class="settingsChangelogContainer">
+            
+            <!-- // NOTE: AUTO UPDATE ISKLJUČEN ZA SADA -->
+
+            <!-- <div class="settingsChangelogContainer">
                 <div class="settingsChangelogContent">
                     <div class="settingsChangelogHeadline">
                         <div class="settingsChangelogLabel"><%- lang('settings.releaseNotes') %></div>
@@ -349,7 +366,7 @@
                 <div class="settingsChangelogActions">
                     <a class="settingsChangelogButton settingsAboutButton" href="#"><%- lang('settings.viewReleaseNotes') %></a>
                 </div>
-            </div>
+            </div> -->
         </div>
         <div id="settingsTabUpdate" class="settingsTab" style="display: none;">
             <div class="settingsTabHeader">
@@ -371,9 +388,11 @@
                             </div>
                         </div>
                     </div>
-                    <div id="settingsUpdateActionContainer">
+                    
+                    <!-- // NOTE: AUTO UPDATE ISKLJUČEN ZA SADA -->
+                    <!-- <div id="settingsUpdateActionContainer">
                         <button id="settingsUpdateActionButton"><%- lang('settings.checkForUpdates') %></button>
-                    </div>
+                    </div> -->
                 </div>
             </div>
             <div class="settingsChangelogContainer">

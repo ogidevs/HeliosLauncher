@@ -59,24 +59,50 @@ function getCurrentView(){
 
 async function showMainUI(data){
 
-    if(!isDev){
-        loggerAutoUpdater.info('Initializing..')
-        ipcRenderer.send('autoUpdateAction', 'initAutoUpdater', ConfigManager.getAllowPrerelease())
-    }
+    // NOTE: AUTO UPDATE ISKLJUČEN ZA SADA
+    // if(!isDev){
+    //     loggerAutoUpdater.info('Initializing..')
+    //     ipcRenderer.send('autoUpdateAction', 'initAutoUpdater', ConfigManager.getAllowPrerelease())
+    // }
 
     await prepareSettings(true)
     updateSelectedServer(data.getServerById(ConfigManager.getSelectedServer()))
     refreshServerStatus()
     setTimeout(() => {
         document.getElementById('frameBar').style.backgroundColor = 'rgba(0, 0, 0, 0.5)'
-        document.body.style.backgroundImage = `url('assets/images/backgrounds/${document.body.getAttribute('bkid')}.jpg')`
+        fetch(`${ConfigManager.getBackendURL()}/launcher_background`)
+            .then(response => {
+                if (response.status === 404) {
+                    avatarContainer.style.backgroundImage = `url('${skin1}')`;
+                    throw new Error('Image not found (404)');
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                });
+            })
+            .then(dataUrl => {
+                document.body.style.backgroundImage = `url('${dataUrl}')`
+            })
+            .catch(error => {
+                document.body.style.backgroundImage = `url('assets/images/backgrounds/${document.body.getAttribute('bkid')}.jpg')`
+                console.error('Error fetching the image:', error);
+            });
+
+        // document.body.style.backgroundImage = `url('assets/images/backgrounds/${document.body.getAttribute('bkid')}.jpg')`
         $('#main').show()
 
-        const isLoggedIn = Object.keys(ConfigManager.getAuthAccounts()).length > 0
+        setupAudio()
 
+        const isLoggedIn = Object.keys(ConfigManager.getAuthAccounts()).length > 0
         // If this is enabled in a development environment we'll get ratelimited.
         // The relaunch frequency is usually far too high.
-        if(!isDev && isLoggedIn){
+        if(isLoggedIn){ // !isDev NOTE: iskljuceno za sada
             validateSelectedAccount()
         }
 
@@ -124,7 +150,53 @@ function showFatalStartupError(){
             })
             toggleOverlay(true)
         })
-    }, 750)
+    }, 750);
+}
+
+function setupAudio() {
+    fetch(`${ConfigManager.getBackendURL()}/launcher_soundtrack`)
+        .then(response => {
+            if (response.status === 404) {
+                throw new Error('Audio not found (404)');
+            }
+            const contentDisposition = response.headers.get('content-disposition');
+
+            const fileNameMatch = /filename=([^;]+)/.exec(contentDisposition);
+            const fileName = fileNameMatch ? fileNameMatch[1] : 'audio.mp3';
+
+            const currentAudioDiv = document.createElement('div');
+            currentAudioDiv.id = 'currentAudio';
+            currentAudioDiv.textContent = `Trenutno slušaš: ${fileName}`;
+            document.body.appendChild(currentAudioDiv);
+
+            const audio = new Audio(response.url);
+            audio.autoplay = true;
+            audio.loop = true;
+            audio.controls = true;
+            audio.className = 'audio-element';
+            audio.volume = 0.1;
+    
+            $("#mute_audio_button").on("click", function() {
+                if (audio.muted) {
+                    audio.muted = false;
+                    var elem = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-volume-up-fill mediaSVG" viewBox="0 0 16 16">' +
+                    '<path d="M11.536 14.01A8.473 8.473 0 0 0 14.026 8a8.473 8.473 0 0 0-2.49-6.01l-.708.707A7.476 7.476 0 0 1 13.025 8c0 2.071-.84 3.946-2.197 5.303l.708.707z"/>' +
+                    '<path d="M10.121 12.596A6.48 6.48 0 0 0 12.025 8a6.48 6.48 0 0 0-1.904-4.596l-.707.707A5.483 5.483 0 0 1 11.025 8a5.483 5.483 0 0 1-1.61 3.89z"/>' +
+                    '<path d="M8.707 11.182A4.486 4.486 0 0 0 10.025 8a4.486 4.486 0 0 0-1.318-3.182L8 5.525A3.489 3.489 0 0 1 9.025 8 3.49 3.49 0 0 1 8 10.475zM6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06z"/>' +
+                    '</svg>'
+                    $(this).html(elem);
+                } else {
+                    var elem = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-volume-mute-fill mediaSVG" viewBox="0 0 16 16"><path d="M6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06zm7.137 2.096a.5.5 0 0 1 0 .708L12.207 8l1.647 1.646a.5.5 0 0 1-.708.708L11.5 8.707l-1.646 1.647a.5.5 0 0 1-.708-.708L10.793 8 9.146 6.354a.5.5 0 1 1 .708-.708L11.5 7.293l1.646-1.647a.5.5 0 0 1 .708 0z"/></svg>'
+                    audio.muted = true;
+                    $(this).html(elem);
+                }
+            });
+            // Append the audio element to the body or any other container
+            document.body.appendChild(audio);
+        })
+        .catch(error => {
+            console.error('Error fetching or playing the audio:', error);
+        });
 }
 
 /**
@@ -324,8 +396,10 @@ function mergeModConfiguration(o, n, nReq = false){
 }
 
 async function validateSelectedAccount(){
+    console.log('Validating selected account..')
     const selectedAcc = ConfigManager.getSelectedAccount()
     if(selectedAcc != null){
+        console.log('Selected account is not null.')
         const val = await AuthManager.validateSelected()
         if(!val){
             ConfigManager.removeAuthAccount(selectedAcc.uuid)
@@ -345,7 +419,9 @@ async function validateSelectedAccount(){
 
                 if(isMicrosoft) {
                     // Empty for now
-                } else {
+                } else if (selectedAcc.type === 'cracked'){
+                    // Empty for now
+                }else{
                     // Mojang
                     // For convenience, pre-populate the username of the account.
                     document.getElementById('loginUsername').value = selectedAcc.username
@@ -368,6 +444,8 @@ async function validateSelectedAccount(){
                                 selectedAcc.microsoft.refresh_token,
                                 selectedAcc.microsoft.expires_at
                             )
+                        } else if (selectedAcc.type === 'cracked'){
+                            ConfigManager.addCrackedAuthAccount(selectedAcc.uuid, selectedAcc.accessToken, selectedAcc.username, selectedAcc.displayName, document.getElementById('passwordInput').value)
                         } else {
                             ConfigManager.addMojangAuthAccount(selectedAcc.uuid, selectedAcc.accessToken, selectedAcc.username, selectedAcc.displayName)
                         }

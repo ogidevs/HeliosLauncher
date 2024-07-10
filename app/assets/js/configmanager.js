@@ -7,9 +7,13 @@ const logger = LoggerUtil.getLogger('ConfigManager')
 
 const sysRoot = process.env.APPDATA || (process.platform == 'darwin' ? process.env.HOME + '/Library/Application Support' : process.env.HOME)
 
-const dataPath = path.join(sysRoot, '.helioslauncher')
+const dataPath = path.join(sysRoot, '.woglauncher')
 
 const launcherDir = require('@electron/remote').app.getPath('userData')
+
+
+// const BACKEND_URL = 'https://worldofglory.eu/'
+const BACKEND_URL = 'http://188.245.52.87:5000/'
 
 /**
  * Retrieve the absolute path of the launcher directory.
@@ -18,6 +22,10 @@ const launcherDir = require('@electron/remote').app.getPath('userData')
  */
 exports.getLauncherDirectory = function(){
     return launcherDir
+}
+// GET BACKEND URL
+exports.getBackendURL = function(){
+    return BACKEND_URL
 }
 
 /**
@@ -205,6 +213,10 @@ exports.getTempNativeFolder = function(){
     return 'WCNatives'
 }
 
+exports.getDataPath = function(){
+    return dataPath
+}
+
 // System Settings (Unconfigurable on UI)
 
 /**
@@ -327,6 +339,11 @@ exports.updateMojangAuthAccount = function(uuid, accessToken){
     return config.authenticationDatabase[uuid]
 }
 
+exports.updateCrackedAuthAccount = function(uuid){
+    config.authenticationDatabase[uuid].type = 'cracked' // For gradual conversion.
+    return config.authenticationDatabase[uuid]
+}
+
 /**
  * Adds an authenticated mojang account to the database to be stored.
  * 
@@ -345,6 +362,30 @@ exports.addMojangAuthAccount = function(uuid, accessToken, username, displayName
         username: username.trim(),
         uuid: uuid.trim(),
         displayName: displayName.trim()
+    }
+    return config.authenticationDatabase[uuid]
+}
+
+
+/**
+ * Adds an authenticated mojang account to the database to be stored.
+ * 
+ * @param {string} uuid The uuid of the authenticated account.
+ * @param {string} accessToken The accessToken of the authenticated account.
+ * @param {string} username The username (usually email) of the authenticated account.
+ * @param {string} displayName The in game name of the authenticated account.
+ * @param {string} password The account password.
+ * 
+ * @returns {Object} The authenticated account object created by this action.
+ */
+exports.addCrackedAuthAccount = function(uuid, username, displayName, password){
+    config.selectedAccount = uuid
+    config.authenticationDatabase[uuid] = {
+        type: 'cracked',
+        username: username.trim(),
+        uuid: uuid.trim(),
+        displayName: displayName.trim(),
+        password: password.trim()
     }
     return config.authenticationDatabase[uuid]
 }
