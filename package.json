@@ -56,7 +56,7 @@
     "publish": [{
         "provider": "github",
         "owner": "ogidev",
-        "repo": "wog-launcher"
+        "repo": "HeliosLauncher"
     }]
   }
 }
