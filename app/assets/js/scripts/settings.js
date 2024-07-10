@@ -1590,8 +1590,8 @@ function populateReleaseNotes(){
  */
 function prepareAboutTab(){
     populateAboutVersionInformation()
-    // AUTO UPDATE ISKLJUČEN ZA SADA
-    populateReleaseNotes()
+    // AUTO UPDATE ISKLJUČEN ZA SADA / OVO JE ZA CHANGELOGS (RLEASE NOTES), ne treba nam
+    // populateReleaseNotes()
 }
 
 /**
