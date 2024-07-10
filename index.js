@@ -23,7 +23,7 @@ function initAutoUpdater(event, data) {
         autoUpdater.allowPrerelease = true
     } else {
         // Defaults to true if application version contains prerelease components (e.g. 0.12.1-alpha.1)
-        // autoUpdater.allowPrerelease = true
+        autoUpdater.allowPrerelease = true
     }
     
     if(isDev){
@@ -52,39 +52,39 @@ function initAutoUpdater(event, data) {
 
 // NOTE: AUTO UPDATE ISKLJUČEN ZA SADA
 // Open channel to listen for update actions.
-// ipcMain.on('autoUpdateAction', (event, arg, data) => {
-//     switch(arg){
-//         case 'initAutoUpdater':
-//             console.log('Initializing auto updater.')
-//             initAutoUpdater(event, data)
-//             event.sender.send('autoUpdateNotification', 'ready')
-//             break
-//         case 'checkForUpdate':
-//             autoUpdater.checkForUpdates()
-//                 .catch(err => {
-//                     event.sender.send('autoUpdateNotification', 'realerror', err)
-//                 })
-//             break
-//         case 'allowPrereleaseChange':
-//             if(!data){
-//                 const preRelComp = semver.prerelease(app.getVersion())
-//                 if(preRelComp != null && preRelComp.length > 0){
-//                     autoUpdater.allowPrerelease = true
-//                 } else {
-//                     autoUpdater.allowPrerelease = data
-//                 }
-//             } else {
-//                 autoUpdater.allowPrerelease = data
-//             }
-//             break
-//         case 'installUpdateNow':
-//             autoUpdater.quitAndInstall()
-//             break
-//         default:
-//             console.log('Unknown argument', arg)
-//             break
-//     }
-// })
+ipcMain.on('autoUpdateAction', (event, arg, data) => {
+    switch(arg){
+        case 'initAutoUpdater':
+            console.log('Initializing auto updater.')
+            initAutoUpdater(event, data)
+            event.sender.send('autoUpdateNotification', 'ready')
+            break
+        case 'checkForUpdate':
+            autoUpdater.checkForUpdates()
+                .catch(err => {
+                    event.sender.send('autoUpdateNotification', 'realerror', err)
+                })
+            break
+        case 'allowPrereleaseChange':
+            if(!data){
+                const preRelComp = semver.prerelease(app.getVersion())
+                if(preRelComp != null && preRelComp.length > 0){
+                    autoUpdater.allowPrerelease = true
+                } else {
+                    autoUpdater.allowPrerelease = data
+                }
+            } else {
+                autoUpdater.allowPrerelease = data
+            }
+            break
+        case 'installUpdateNow':
+            autoUpdater.quitAndInstall()
+            break
+        default:
+            console.log('Unknown argument', arg)
+            break
+    }
+})
 // Redirect distribution index event from preloader to renderer.
 ipcMain.on('distributionIndexDone', (event, res) => {
     event.sender.send('distributionIndexDone', res)

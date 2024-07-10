@@ -1510,10 +1510,10 @@ const settingsAboutChangelogButton = settingsTabAbout.getElementsByClassName('se
 
 // NOTE: AUTO UPDATE ISKLJUČEN ZA SADA
 // Bind the devtools toggle button.
-// document.getElementById('settingsAboutDevToolsButton').onclick = (e) => {
-//     let window = remote.getCurrentWindow()
-//     window.toggleDevTools()
-// }
+document.getElementById('settingsAboutDevToolsButton').onclick = (e) => {
+    let window = remote.getCurrentWindow()
+    window.toggleDevTools()
+}
 
 /**
  * Return whether or not the provided version is a prerelease.
@@ -1591,7 +1591,7 @@ function populateReleaseNotes(){
 function prepareAboutTab(){
     populateAboutVersionInformation()
     // AUTO UPDATE ISKLJUČEN ZA SADA
-    // populateReleaseNotes()
+    populateReleaseNotes()
 }
 
 /**
@@ -1649,12 +1649,12 @@ function populateSettingsUpdateInformation(data){
         populateVersionInformation(remote.app.getVersion(), settingsUpdateVersionValue, settingsUpdateVersionTitle, settingsUpdateVersionCheck)
         
         // NOTE: AUTO UPDATE ISKLJUČEN ZA SADA
-        // settingsUpdateButtonStatus(Lang.queryJS('settings.updates.checkForUpdatesButton'), false, () => {
-        //     if(!isDev){
-        //         ipcRenderer.send('autoUpdateAction', 'checkForUpdate')
-        //         settingsUpdateButtonStatus(Lang.queryJS('settings.updates.checkingForUpdatesButton'), true)
-        //     }
-        // })
+        settingsUpdateButtonStatus(Lang.queryJS('settings.updates.checkForUpdatesButton'), false, () => {
+            if(!isDev){
+                ipcRenderer.send('autoUpdateAction', 'checkForUpdate')
+                settingsUpdateButtonStatus(Lang.queryJS('settings.updates.checkingForUpdatesButton'), true)
+            }
+        })
     }
 }
 

@@ -60,10 +60,10 @@ function getCurrentView(){
 async function showMainUI(data){
 
     // NOTE: AUTO UPDATE ISKLJUČEN ZA SADA
-    // if(!isDev){
-    //     loggerAutoUpdater.info('Initializing..')
-    //     ipcRenderer.send('autoUpdateAction', 'initAutoUpdater', ConfigManager.getAllowPrerelease())
-    // }
+    if(!isDev){
+        loggerAutoUpdater.info('Initializing..')
+        ipcRenderer.send('autoUpdateAction', 'initAutoUpdater', ConfigManager.getAllowPrerelease())
+    }
 
     await prepareSettings(true)
     updateSelectedServer(data.getServerById(ConfigManager.getSelectedServer()))
