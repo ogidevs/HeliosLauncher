@@ -13,7 +13,7 @@ const launcherDir = require('@electron/remote').app.getPath('userData')
 
 
 // const BACKEND_URL = 'https://worldofglory.eu/'
-const BACKEND_URL = 'http://188.245.52.87:5000/'
+const BACKEND_URL = 'http://88.99.173.69:5000/'
 
 /**
  * Retrieve the absolute path of the launcher directory.
