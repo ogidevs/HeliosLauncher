@@ -103,7 +103,7 @@ function setLaunchEnabled(val){
 // Bind launch button
 document.getElementById('launch_button').addEventListener('click', async e => {
     loggerLanding.info('Launching game..')
-    $("#currentAudio").muted = true;
+    $("#mute_audio_button").trigger("click", [true]);
     try {
         const response = await fetch(`${ConfigManager.getBackendURL()}/get_version`);
 
