@@ -48,10 +48,16 @@ loginOptionCracked.onclick = (e) => {
     const url = `${ConfigManager.getBackendURL()}/get_character/${usernameInput.value}?char_password=${passwordInput.value}`;
     // Napravite AJAX zahtev koristeći fetch
     fetch(url)
-    .then(response => {
+    .then(async response => {
         if (!response.ok) {
             $('#loginNotification').fadeIn(1000);
-            loginNotification.innerHTML = 'Neispravni podaci za prijavu. Pokušajte ponovo.'
+            var jsonResponse = await response.json().catch(() => ({ message: 'Neispravni podaci za prijavu. Pokušajte ponovo.' }));
+            console.log(jsonResponse)
+            if (jsonResponse.result === false) {
+                loginNotification.innerHTML = jsonResponse.message
+            } else {
+                loginNotification.innerHTML = 'Neispravni podaci za prijavu. Pokušajte ponovo.'
+            }
             $('#loginNotification').delay(3000).fadeOut(1000);
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
@@ -141,7 +147,6 @@ loginOptionCracked.onclick = (e) => {
     .catch(error => {
         console.error('Greška:', error);
         $('#loginNotification').fadeIn(1000);
-        loginNotification.innerHTML = 'Neispravni podaci za prijavu. Pokušajte ponovo.'
         $('#loginNotification').delay(3000).fadeOut(1000);
     });
 }
