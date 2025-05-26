@@ -1,7 +1,7 @@
 # Custom Language File for Launcher Customizer
 
 [ejs.app]
-title = "World Of Glory Launcher"
+title = "NewEra RP Launcher"
 
 [ejs.landing]
 mediaGitHubURL = "https://github.com/dscalzi/HeliosLauncher"
@@ -16,6 +16,6 @@ sourceGithubLink = "https://github.com/ogidevs/HeliosLauncher"
 supportLink = "https://github.com/ogidevs/HeliosLauncher/issues"
 
 [ejs.welcome]
-welcomeHeader = "Dobrodošli na World Of Glory"
+welcomeHeader = "Dobrodošli na NewEra RP"
 welcomeDescription = ""
 welcomeDescCTA = "Započni svoju avanturu!"

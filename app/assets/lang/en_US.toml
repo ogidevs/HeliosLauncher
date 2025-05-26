@@ -35,7 +35,7 @@ loginPasswordDisclaimer1 = "Tvoja lozinka se šalje izravno Mojangu i nikada se 
 loginPasswordDisclaimer2 = "{appName} nije povezan s Mojang AB."
 
 [ejs.loginOptions]
-loginOptionsTitle = "Dobrodošli na World Of Glory"
+loginOptionsTitle = "Dobrodošli na NewEra RP"
 loginWithMicrosoft = "Login with Microsoft"
 loginWithMojang = "Login with Mojang"
 loginOptionCracked = "Prijava"
