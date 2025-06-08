@@ -8,8 +8,8 @@ mediaGitHubURL = "https://github.com/dscalzi/HeliosLauncher"
 mediaXURL = "#"
 mediaInstagramURL = "#"
 mediaYouTubeURL = "#"
-mediaTiktokURL = "https://www.tiktok.com/@worldofglory.eu"
-mediaDiscordURL = "https://discord.gg/FV6mwHVgam"
+mediaTiktokURL = "https://www.tiktok.com"
+mediaDiscordURL = "https://discord.gg/XPguYrK8UQ"
 
 [ejs.settings]
 sourceGithubLink = "https://github.com/ogidevs/HeliosLauncher"
