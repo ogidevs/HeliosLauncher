@@ -174,6 +174,7 @@ function setupAudio() {
             audio.loop = true;
             audio.controls = true;
             audio.className = 'audio-element';
+            audio.id = 'audioPlayer';
             audio.volume = 0.1;
     
             $("#mute_audio_button").on("click", function() {
