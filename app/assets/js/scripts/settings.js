@@ -542,6 +542,19 @@ function processLogOut(val, isLastAccount){
     const uuid = parent.getAttribute('uuid')
     const prevSelAcc = ConfigManager.getSelectedAccount()
     const targetAcc = ConfigManager.getAuthAccount(uuid)
+    if (targetAcc === null) {
+        console.warn('Tried to log out an account that does not exist in the auth database. UUID:', uuid)
+        if(!isLastAccount && uuid === prevSelAcc.uuid){
+                const selAcc = ConfigManager.getSelectedAccount()
+                refreshAuthAccountSelected(selAcc.uuid)
+                updateSelectedAccount(selAcc)
+                validateSelectedAccount()
+            }
+            if(isLastAccount) {
+                switchView(getCurrentView(), VIEWS.loginOptions)
+            }
+        return
+    }
     if(targetAcc.type === 'microsoft') {
         msAccDomElementCache = parent
         switchView(getCurrentView(), VIEWS.waiting, 500, 500, () => {
