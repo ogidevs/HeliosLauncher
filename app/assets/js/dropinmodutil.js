@@ -10,10 +10,14 @@ const MOD_REGEX = /^(.+(jar|zip|litemod))(?:\.(disabled))?$/
 const DISABLED_EXT = '.disabled'
 
 const SHADER_REGEX = /^(.+)\.zip$/
-const SHADER_OPTION = /shaderPack=(.+)/
 const SHADER_DIR = 'shaderpacks'
+
+const SHADER_OPTION = /shaderPack=(.+)/
 const SHADER_CONFIG = 'optionsshaders.txt'
 
+const OCULUS_SHADER_CONFIG = './config/oculus.properties'
+const OCULUS_SHADER_OPTION_REGEX = /^shaderPack=.*/m;
+const OCULUS_SHADERS_REGEX = /^enableShaders=.*/m;
 /**
  * Validate that the given directory exists. If not, it is
  * created.
@@ -215,7 +219,38 @@ exports.setEnabledShaderpack = function(instanceDir, pack){
         buf = `shaderPack=${pack}`
     }
     fs.writeFileSync(optionsShaders, buf, {encoding: 'utf-8'})
-}
+
+    // --- Part 2: Handle Oculus (config/oculus.properties) - NEW LOGIC ---
+    const oculusConfigPath = path.join(instanceDir, OCULUS_SHADER_CONFIG);
+    let oculusBuf = '';
+
+    // Create the 'config' directory if it doesn't exist to prevent errors
+    const oculusDir = path.dirname(oculusConfigPath);
+    if (!fs.existsSync(oculusDir)) {
+        fs.mkdirSync(oculusDir, { recursive: true });
+    }
+
+    // Read the file's content if it exists, otherwise start with an empty string
+    if (fs.existsSync(oculusConfigPath)) {
+        oculusBuf = fs.readFileSync(oculusConfigPath, { encoding: 'utf-8' });
+    }
+
+    if (OCULUS_SHADERS_REGEX.test(oculusBuf)) {
+        oculusBuf = oculusBuf.replace(OCULUS_SHADERS_REGEX, 'enableShaders=true');
+    } else {
+        oculusBuf = oculusBuf.trim() + '\nenableShaders=true';
+    }
+
+    // Set the shaderPack. Replaces the line if it exists, otherwise appends it.
+    if (OCULUS_SHADER_OPTION_REGEX.test(oculusBuf)) {
+        oculusBuf = oculusBuf.replace(OCULUS_SHADER_OPTION_REGEX, `shaderPack=${pack}`);
+    } else {
+        oculusBuf = oculusBuf.trim() + `\nshaderPack=${pack}`;
+    }
+
+    // Write the modified content back, ensuring a clean trailing newline
+    fs.writeFileSync(oculusConfigPath, oculusBuf.trim() + '\n', { encoding: 'utf-8' });
+};
 
 /**
  * Add shaderpacks.
