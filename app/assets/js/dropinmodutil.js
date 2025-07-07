@@ -235,11 +235,10 @@ exports.setEnabledShaderpack = function(instanceDir, pack){
         oculusBuf = fs.readFileSync(oculusConfigPath, { encoding: 'utf-8' });
     }
 
-    if (OCULUS_SHADERS_REGEX.test(oculusBuf)) {
-        oculusBuf = oculusBuf.replace(OCULUS_SHADERS_REGEX, 'enableShaders=true');
-    } else {
-        oculusBuf = oculusBuf.trim() + '\nenableShaders=true';
-    }
+    const enableShadersValue = pack !== 'OFF' ? 'true' : 'false';
+    oculusBuf = OCULUS_SHADERS_REGEX.test(oculusBuf)
+        ? oculusBuf.replace(OCULUS_SHADERS_REGEX, `enableShaders=${enableShadersValue}`)
+        : oculusBuf.trim() + `\nenableShaders=${enableShadersValue}`;
 
     // Set the shaderPack. Replaces the line if it exists, otherwise appends it.
     if (OCULUS_SHADER_OPTION_REGEX.test(oculusBuf)) {
